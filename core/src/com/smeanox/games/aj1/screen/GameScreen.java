@@ -17,7 +17,7 @@ import com.smeanox.games.aj1.world.World;
 
 public class GameScreen implements Screen{
 
-	private final Texture hand;
+	private final Texture hand, background;
 	private final SpriteBatch spriteBatch;
 	private final ShapeRenderer shapeRenderer;
 	private final Camera camera;
@@ -30,6 +30,7 @@ public class GameScreen implements Screen{
 
 	public GameScreen() {
 		hand = new Texture(Gdx.files.internal("img/hand.png"));
+		background = new Texture(Gdx.files.internal("img/background.png"));
 		spriteBatch = new SpriteBatch();
 		shapeRenderer = new ShapeRenderer();
 		camera = new OrthographicCamera();
@@ -86,7 +87,12 @@ public class GameScreen implements Screen{
 		update(delta);
 		SfxManager.updateAll(delta);
 
+		spriteBatch.begin();
+		spriteBatch.draw(background, -Consts.DESIGN_WIDTH / 2, -Consts.DESIGN_HEIGHT / 2, Consts.DESIGN_WIDTH, Consts.DESIGN_HEIGHT);
+
 		if (Consts.DRAW_LAB) {
+			spriteBatch.end();
+
 			shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
 			shapeRenderer.setColor(1, 0, 0, 1);
 			world.getLabTable().draw(shapeRenderer);
@@ -101,10 +107,11 @@ public class GameScreen implements Screen{
 				ingredient.draw(shapeRenderer);
 			}
 			shapeRenderer.end();
+
+			spriteBatch.begin();
 		}
 
-		spriteBatch.begin();
-		spriteBatch.draw(hand, mousePosition.x - 10, mousePosition.y - hand.getHeight() + 10);
+		spriteBatch.draw(hand, mousePosition.x - 50, mousePosition.y - hand.getHeight() + 50);
 		spriteBatch.end();
 	}
 

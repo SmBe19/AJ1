@@ -1,17 +1,16 @@
-3 5 5
+1 4 5
 lvl2.txt
-a 0 2
-b 0 1
-c 1 0
-d 1 2
-e 1 3
+a 0 1
+f 0 3
+k 0 8
+p 0 9
 nar1.mp3
-abd
+a
 nar1.mp3
-eda
+af
 nar1.mp3
-da
+fa
 nar1.mp3
-adcb
+kp
 nar1.mp3
-ade
+pkfa
