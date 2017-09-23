@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 public class Sfx {
 	private static Map<String, Sfx> cache = new HashMap<String, Sfx>();
@@ -26,14 +27,12 @@ public class Sfx {
 
 	private Sfx(final String prefix){
 		sounds = new ArrayList<Sound>();
-		FileHandle[] sfxes = Gdx.files.internal("sfx").list(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-				return name.startsWith(prefix);
+		Scanner cin = new Scanner(Gdx.files.internal("sfx/index.txt").reader());
+		while(cin.hasNext()){
+			String filename = cin.next();
+			if (filename.startsWith(prefix)){
+				sounds.add(Gdx.audio.newSound(Gdx.files.internal("sfx").child(filename)));
 			}
-		});
-		for (FileHandle sfx : sfxes) {
-			sounds.add(Gdx.audio.newSound(sfx));
 		}
 		if (sounds.size() == 0) {
 			throw new IllegalArgumentException("Sound effect not found: " + prefix);
