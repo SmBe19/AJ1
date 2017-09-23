@@ -1,7 +1,6 @@
 package com.smeanox.games.aj1.world;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.StringBuilder;
 import com.smeanox.games.aj1.Consts;
@@ -17,6 +16,7 @@ public class World {
 	private final List<Shelf> shelfs;
 	private final List<Ingredient> ingredients;
 	private final List<String> tasks;
+	private String nextLevelName;
 	private float shelfHeight;
 	private int currentTask;
 	private final StringBuilder currentTableValue;
@@ -40,6 +40,7 @@ public class World {
 		int shelfCount = cin.nextInt();
 		int ingredientCount = cin.nextInt();
 		int taskCount = cin.nextInt();
+		nextLevelName = cin.next();
 
 		shelfs.clear();
 		shelfHeight = Consts.SHELF_TOTAL_HEIGHT / shelfCount;
@@ -117,16 +118,25 @@ public class World {
 	}
 
 	public void click(float x, float y){
-
+		Rect rect = findRect(x, y);
+		if (rect != null) {
+			rect.click(x, y);
+		}
 	}
 
 	public void startDrag(float x, float y){
 		dragIngredient = findIngredient(x, y);
 		if (dragIngredient == null){
-			System.out.println("Nothing to drag");
+			System.out.println("[Nothing grabbed]");
 		} else {
 			dragOriginalPosition.set(dragIngredient.getX(), dragIngredient.getY());
 			dragOffset.set(x - dragIngredient.getX(), y - dragIngredient.getY());
+			boolean onTable = labTable.isInside(x, y);
+			if (onTable){
+				System.out.println("[Ingredient grabbed on Lab table]");
+			} else {
+				System.out.println("[Ingredient grabbed on Shelf]");
+			}
 		}
 	}
 
@@ -137,7 +147,7 @@ public class World {
 		}
 	}
 
-	private void shuffleLeft(Ingredient ingredient) {
+	private boolean shuffleLeft(Ingredient ingredient) {
 		Ingredient other = findIngredient(ingredient.getX(), ingredient.getCenterY(), ingredient);
 		if (other != null){
 			other.setX(ingredient.getX() - other.getWidth());
@@ -148,9 +158,10 @@ public class World {
 				shuffleLeft(other);
 			}
 		}
+		return other != null;
 	}
 
-	private void shuffleRight(Ingredient ingredient) {
+	private boolean shuffleRight(Ingredient ingredient) {
 		Ingredient other = findIngredient(ingredient.getX() + ingredient.getWidth(), ingredient.getCenterY(), ingredient);
 		if (other != null) {
 			other.setX(ingredient.getX() + ingredient.getWidth());
@@ -161,6 +172,15 @@ public class World {
 				shuffleRight(other);
 			}
 		}
+		return other != null;
+	}
+
+	private boolean shuffleAround(Ingredient ingredient){
+		boolean shuffled = false;
+		shuffled |= shuffleLeft(dragIngredient);
+		shuffled |= shuffleRight(dragIngredient);
+		shuffled |= shuffleLeft(dragIngredient);
+		return shuffled;
 	}
 
 	private int countIngredientsInRect(Rect rect, Ingredient butWithout) {
@@ -205,23 +225,31 @@ public class World {
 				dragIngredient.setHeight(shelf.getHeight());
 				dragIngredient.setY(shelf.getY());
 				dragIngredient.setX(Math.max(Consts.SHELF_LEFT, Math.min(Consts.SHELF_RIGHT - dragIngredient.getWidth(), dragIngredient.getX())));
-				shuffleLeft(dragIngredient);
-				shuffleRight(dragIngredient);
-				shuffleLeft(dragIngredient);
+				if (shuffleAround(dragIngredient)){
+					System.out.println("[Shuffle on Shelf]");
+				}
+				System.out.println("[Ingredient dropped on Shelf]");
 			} else if (labTable.isInside(x, y) && countIngredientsInRect(labTable, dragIngredient) < Consts.TABLE_INGREDIENT_COUNT) {
 				dragIngredient.setHeight(labTable.getHeight());
 				dragIngredient.setY(labTable.getY());
 				dragIngredient.setX(Math.max(Consts.TABLE_LEFT, Math.min(Consts.TABLE_RIGHT - dragIngredient.getWidth(), dragIngredient.getX())));
-				shuffleLeft(dragIngredient);
-				shuffleRight(dragIngredient);
-				shuffleLeft(dragIngredient);
+				if (shuffleAround(dragIngredient)){
+					System.out.println("[Shuffle on Lab table]");
+				}
+				System.out.println("[Ingredient dropped on Lab table]");
 			} else {
 				dragIngredient.setX(dragOriginalPosition.x);
 				dragIngredient.setY(dragOriginalPosition.y);
-				System.out.println("ingredient falls down");
+				System.out.println("[Ingredient dropped on floor]");
 			}
 			if (checkSolution()){
-				System.out.println("Done");
+				currentTask++;
+				if (currentTask == tasks.size()) {
+					System.out.println("[Next level]");
+					loadFile(nextLevelName);
+				} else {
+					System.out.println("[Next task]");
+				}
 			}
 			dragIngredient = null;
 		}

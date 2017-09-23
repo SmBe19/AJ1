@@ -28,7 +28,7 @@ public class GameScreen implements Screen{
 	private boolean oldMouseDown, dragging;
 
 	public GameScreen() {
-		hand = new Texture(Gdx.files.internal("hand.png"));
+		hand = new Texture(Gdx.files.internal("img/hand.png"));
 		spriteBatch = new SpriteBatch();
 		shapeRenderer = new ShapeRenderer();
 		camera = new OrthographicCamera();

@@ -61,8 +61,4 @@ public abstract class Rect {
 	}
 
 	public abstract void click(float x, float y);
-
-	public abstract void startDrag(float x, float y);
-
-	public abstract void endDrag(float x, float y);
 }

@@ -1,0 +1,12 @@
+3 5 5
+lvl1.txt
+a 0 2
+b 0 1
+c 1 0
+d 1 2
+e 1 3
+abd
+eda
+da
+adcb
+ade

@@ -8,17 +8,7 @@ public class LabTable extends Rect {
 
 	@Override
 	public void click(float x, float y) {
-
-	}
-
-	@Override
-	public void startDrag(float x, float y) {
-
-	}
-
-	@Override
-	public void endDrag(float x, float y) {
-
+		System.out.println("[Lab table]");
 	}
 
 }
