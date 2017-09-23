@@ -6,6 +6,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.StringBuilder;
 import com.smeanox.games.aj1.Consts;
+import com.smeanox.games.aj1.audio.FoodNarrator;
 import com.smeanox.games.aj1.audio.Sfx;
 import com.smeanox.games.aj1.audio.SfxManager;
 
@@ -23,11 +24,13 @@ public class World {
 	private final List<Ingredient> ingredients;
 	private final List<String> tasks;
 	private final List<String> narrations;
+	private final FoodNarrator foodNarrator;
 	private Music narrationMusic;
 	private String nextLevelName;
 	private float shelfHeight;
 	private int currentTask;
 	private float currentTaskStartTime;
+	private float currentTaskParTime;
 	private float food;
 	private final StringBuilder currentTableValue;
 	private final Vector2 dragOffset, dragOriginalPosition;
@@ -36,7 +39,7 @@ public class World {
 	private boolean playedTie;
 	private boolean inPreStartPhase;
 	private float playingIfSound;
-	private boolean playedNarrationMusic;
+	private boolean playedNarrationMusic, playedFoodNarration;
 
 	public World() {
 		labTable = new LabTable(Consts.TABLE_LEFT, Consts.TABLE_OFFSET, Consts.TABLE_WIDTH, Consts.TABLE_HEIGHT);
@@ -46,12 +49,13 @@ public class World {
 		ingredients = new ArrayList<Ingredient>();
 		tasks = new ArrayList<String>();
 		narrations = new ArrayList<String>();
+		foodNarrator = new FoodNarrator();
 		totalTime = 0;
 		dragOffset = new Vector2();
 		dragOriginalPosition = new Vector2();
 		currentTableValue = new StringBuilder();
 		currentTableValue.setLength(Consts.TABLE_INGREDIENT_COUNT);
-		food = 0;
+		food = Consts.FOOD_START;
 		playingIfSound = 0;
 	}
 
@@ -98,7 +102,7 @@ public class World {
 		Sfx.get("if").manager().play();
 		playingIfSound = 5;
 		float usedTime = totalTime - currentTaskStartTime;
-		food += Math.min(10, Math.max(-10, (Consts.PAR_TIME - usedTime) * Consts.FOOD_TIME_MULTIPLIER));
+		food += Math.min(Consts.FOOD_MAX_CHANGE, Math.max(-Consts.FOOD_MAX_CHANGE, (currentTaskParTime - usedTime) * Consts.FOOD_TIME_MULTIPLIER));
 	}
 
 	void startNextTask(){
@@ -115,6 +119,7 @@ public class World {
 		inPreStartPhase = true;
 		narrationMusic = Gdx.audio.newMusic(Gdx.files.internal("nar/" + narrations.get(currentTask)));
 		playedNarrationMusic = false;
+		playedFoodNarration = false;
 	}
 
 	private void startTask(){
@@ -138,6 +143,13 @@ public class World {
 
 		playedTie = false;
 		currentTaskStartTime = totalTime;
+		currentTaskParTime = Math.max(Consts.PAR_TIME_MIN, task.length() * Consts.PAR_TIME_PER_CHAR);
+	}
+
+	public void skipNarration(){
+		if (narrationMusic != null) {
+			narrationMusic.stop();
+		}
 	}
 
 	public LabTable getLabTable() {
@@ -212,13 +224,18 @@ public class World {
 			} else if (!playedNarrationMusic) {
 				narrationMusic.play();
 				playedNarrationMusic = true;
-			} else if (narrationMusic.isPlaying()){
+			} else if (narrationMusic.isPlaying()) {
+				// Do nothing and wait
+			} else if (!playedFoodNarration) {
+				foodNarrator.play((int)food);
+				playedFoodNarration = true;
+			} else if (foodNarrator.isPlaying()) {
 				// Do nothing and wait
 			} else {
 				startTask();
 			}
 		} else {
-			if (!playedTie && totalTime - currentTaskStartTime > Consts.PAR_TIME) {
+			if (!playedTie && totalTime - currentTaskStartTime > currentTaskParTime) {
 				tickSfx.stop();
 				Sfx.get("tie").manager().play();
 				playedTie = true;
@@ -238,9 +255,7 @@ public class World {
 			return;
 		}
 		dragIngredient = findIngredient(x, y);
-		if (dragIngredient == null){
-			System.out.println("[Nothing grabbed]");
-		} else {
+		if (dragIngredient != null) {
 			dragOriginalPosition.set(dragIngredient.getX(), dragIngredient.getY());
 			dragOffset.set(x - dragIngredient.getX(), y - dragIngredient.getY());
 			boolean onTable = labTable.isInside(x, y);

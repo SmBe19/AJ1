@@ -1,0 +1,30 @@
+3 8 10
+lvl4.txt
+b 0 2
+e 0 8
+j 1 0
+m 2 5
+n 2 3
+q 2 5
+v 1 6
+y 0 7
+nar_3_1.mp3
+bem
+nar1.mp3
+meb
+nar1.mp3
+nqbey
+nar1.mp3
+yvqbnm
+nar1.mp3
+bmnqvy
+nar1.mp3
+jmn
+nar1.mp3
+mnjvy
+nar1.mp3
+qvymjeb
+nar1.mp3
+yqvmnjeb
+nar1.mp3
+benj

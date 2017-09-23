@@ -2,9 +2,9 @@ package com.smeanox.games.aj1;
 
 public class Consts {
 	public static final boolean DEBUG = true;
-	public static final boolean DRAW_LAB = true;
+	public static final boolean DRAW_LAB = false;
 
-	public static final String GAME_NAME = "Alchemy";
+	public static final String GAME_NAME = "Hermes the Alchemist";
 	public static final int DESIGN_WIDTH = 800;
 	public static final int DESIGN_HEIGHT = 480;
 
@@ -27,8 +27,11 @@ public class Consts {
 	public static final int SHELF_INGREDIENT_COUNT = 10;
 	public static final float INGREDIENT_WIDTH = SHELF_WIDTH / Consts.SHELF_INGREDIENT_COUNT;
 	public static final int TABLE_INGREDIENT_COUNT = ((int) (TABLE_WIDTH / INGREDIENT_WIDTH + 0.5f));
-	public static final float PAR_TIME = 45;
-	public static final float FOOD_TIME_MULTIPLIER = 0.1f;
+	public static final float PAR_TIME_MIN = 45;
+	public static final float PAR_TIME_PER_CHAR = 15;
+	public static final float FOOD_START = 100;
+	public static final float FOOD_MAX_CHANGE = 20;
+	public static final float FOOD_TIME_MULTIPLIER = 0.5f;
 	public static final float PAN_LEFT = -0.6f;
 	public static final float PAN_RIGHT = 0.6f;
 	public static final float SHUFFLE_TIME = 0.8f;

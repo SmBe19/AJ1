@@ -35,6 +35,9 @@ public class Sfx {
 		for (FileHandle sfx : sfxes) {
 			sounds.add(Gdx.audio.newSound(sfx));
 		}
+		if (sounds.size() == 0) {
+			throw new IllegalArgumentException("Sound effect not found: " + prefix);
+		}
 	}
 
 	public Sound getRandomSound(){

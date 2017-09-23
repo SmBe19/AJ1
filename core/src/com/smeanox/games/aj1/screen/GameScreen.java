@@ -1,6 +1,7 @@
 package com.smeanox.games.aj1.screen;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.GL20;
@@ -10,10 +11,13 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 import com.smeanox.games.aj1.Consts;
+import com.smeanox.games.aj1.audio.FoodNarrator;
 import com.smeanox.games.aj1.audio.SfxManager;
 import com.smeanox.games.aj1.world.Ingredient;
 import com.smeanox.games.aj1.world.Shelf;
 import com.smeanox.games.aj1.world.World;
+
+import static com.badlogic.gdx.Gdx.input;
 
 public class GameScreen implements Screen{
 
@@ -49,7 +53,7 @@ public class GameScreen implements Screen{
 	private void update(float delta){
 		world.update(delta);
 
-		boolean mouseDown = Gdx.input.isTouched();
+		boolean mouseDown = input.isTouched();
 
 		if (mouseDown && !oldMouseDown){
 			mouseDownPosition.set(mousePosition);
@@ -73,6 +77,10 @@ public class GameScreen implements Screen{
 			}
 		}
 
+		if (input.isKeyJustPressed(Input.Keys.SPACE)) {
+			world.skipNarration();
+		}
+
 		oldMouseDown = mouseDown;
 	}
 
@@ -81,7 +89,7 @@ public class GameScreen implements Screen{
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-		mousePosition.set(Gdx.input.getX(), Gdx.input.getY(), 0);
+		mousePosition.set(input.getX(), input.getY(), 0);
 		camera.unproject(mousePosition);
 
 		update(delta);
@@ -111,7 +119,7 @@ public class GameScreen implements Screen{
 			spriteBatch.begin();
 		}
 
-		spriteBatch.draw(hand, mousePosition.x - 50, mousePosition.y - hand.getHeight() + 50);
+		spriteBatch.draw(hand, mousePosition.x - 60, mousePosition.y - hand.getHeight() + 60);
 		spriteBatch.end();
 	}
 

@@ -1,0 +1,42 @@
+3 20 10
+lvl5.txt
+a 0 0
+b 1 0
+e 0 1
+f 1 1
+i 0 2
+j 1 2
+m 0 3
+n 1 3
+q 0 4
+r 1 4
+u 0 5
+v 1 5
+y 0 6
+z 1 6
+d 0 7
+g 1 7
+l 0 8
+o 1 8
+t 0 9
+w 1 9
+nar_4_1.mp3
+mnq
+nar1.mp3
+towlqn
+nar1.mp3
+benjamiw
+nar1.mp3
+zdglot
+nar1.mp3
+feba
+nar1.mp3
+yvurqfba
+nar1.mp3
+ruvyqbfa
+nar1.mp3
+otrumn
+nar1.mp3
+warn
+nar1.mp3
+ermfab
