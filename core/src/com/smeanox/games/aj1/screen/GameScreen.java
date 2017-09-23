@@ -90,6 +90,8 @@ public class GameScreen implements Screen{
 			shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
 			shapeRenderer.setColor(1, 0, 0, 1);
 			world.getLabTable().draw(shapeRenderer);
+			world.getRepeatButton().draw(shapeRenderer);
+			world.getConfirmButton().draw(shapeRenderer);
 			shapeRenderer.setColor(0.5f, 0.5f, 1, 1);
 			for (Shelf shelf : world.getShelfs()) {
 				shelf.draw(shapeRenderer);

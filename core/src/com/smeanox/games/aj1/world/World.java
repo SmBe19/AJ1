@@ -1,6 +1,7 @@
 package com.smeanox.games.aj1.world;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.StringBuilder;
@@ -16,9 +17,13 @@ public class World {
 
 	private float totalTime;
 	private final LabTable labTable;
+	private final RepeatButton repeatButton;
+	private final ConfirmButton confirmButton;
 	private final List<Shelf> shelfs;
 	private final List<Ingredient> ingredients;
 	private final List<String> tasks;
+	private final List<String> narrations;
+	private Music narrationMusic;
 	private String nextLevelName;
 	private float shelfHeight;
 	private int currentTask;
@@ -27,20 +32,27 @@ public class World {
 	private final StringBuilder currentTableValue;
 	private final Vector2 dragOffset, dragOriginalPosition;
 	private Ingredient dragIngredient;
-	private SfxManager tickSfx;
+	private SfxManager tickSfx, taskSfx;
 	private boolean playedTie;
+	private boolean inPreStartPhase;
+	private float playingIfSound;
+	private boolean playedNarrationMusic;
 
 	public World() {
 		labTable = new LabTable(Consts.TABLE_LEFT, Consts.TABLE_OFFSET, Consts.TABLE_WIDTH, Consts.TABLE_HEIGHT);
+		repeatButton = new RepeatButton(Consts.LEFT_INFTY, Consts.BOTTOM_INFTY, Consts.TABLE_LEFT - 10 - Consts.LEFT_INFTY, Consts.TOP_INFTY - Consts.BOTTOM_INFTY);
+		confirmButton = new ConfirmButton(Consts.TABLE_RIGHT + 10, Consts.BOTTOM_INFTY, Consts.RIGHT_INFTY - 10 - Consts.TABLE_RIGHT, Consts.TOP_INFTY - Consts.BOTTOM_INFTY, this);
 		shelfs = new ArrayList<Shelf>();
 		ingredients = new ArrayList<Ingredient>();
 		tasks = new ArrayList<String>();
+		narrations = new ArrayList<String>();
 		totalTime = 0;
 		dragOffset = new Vector2();
 		dragOriginalPosition = new Vector2();
 		currentTableValue = new StringBuilder();
 		currentTableValue.setLength(Consts.TABLE_INGREDIENT_COUNT);
 		food = 0;
+		playingIfSound = 0;
 	}
 
 	public void loadFile(String fileName) {
@@ -64,46 +76,80 @@ public class World {
 			ingredients.add(new Ingredient(Consts.SHELF_LEFT + x * Consts.INGREDIENT_WIDTH, Consts.SHELF_OFFSET + shelf * shelfHeight, Consts.INGREDIENT_WIDTH, shelfHeight, name));
 		}
 
+		narrations.clear();
 		tasks.clear();
 		for (int i = 0; i < taskCount; i++) {
+			narrations.add(cin.next());
 			tasks.add(cin.next());
 		}
 
 		currentTask = 0;
-		startTask();
+		preStartTask();
 	}
 
 	private void finishTask(){
 		if (tickSfx != null) {
 			tickSfx.stop();
 		}
+		if (taskSfx != null) {
+			taskSfx.stop();
+		}
+		repeatButton.setCurrentTask(null);
+		Sfx.get("if").manager().play();
+		playingIfSound = 5;
 		float usedTime = totalTime - currentTaskStartTime;
 		food += Math.min(10, Math.max(-10, (Consts.PAR_TIME - usedTime) * Consts.FOOD_TIME_MULTIPLIER));
 	}
 
-	private void startNextTask(){
+	void startNextTask(){
 		finishTask();
 		currentTask++;
 		if (currentTask == tasks.size()) {
-			System.out.println("[Next level]");
 			loadFile(nextLevelName);
 		} else {
-			System.out.println("[Next task]");
-			startTask();
+			preStartTask();
 		}
 	}
 
+	private void preStartTask(){
+		inPreStartPhase = true;
+		narrationMusic = Gdx.audio.newMusic(Gdx.files.internal("nar/" + narrations.get(currentTask)));
+		playedNarrationMusic = false;
+	}
+
 	private void startTask(){
-		tickSfx = Sfx.get("tis").manager();
-		SfxManager tit = tickSfx.then(0.6f, Sfx.get("tit"));
-		tit.repeat(5.7f);
+		inPreStartPhase = false;
+		String task = tasks.get(currentTask);
+		SfxManager mgr;
+		tickSfx = SfxManager.empty();
+		mgr = tickSfx.then(task.length() * Consts.TASK_SOUND_LENGTH, Sfx.get("tis"));
+		mgr = mgr.then(0.6f, Sfx.get("tit"));
+		mgr.repeat(5.7f);
 		tickSfx.play();
+
+		taskSfx = SfxManager.empty();
+		mgr = taskSfx;
+		for (int i = 0; i < task.length(); i++) {
+			mgr = mgr.then(Consts.TASK_SOUND_LENGTH, Sfx.get("in_" + task.charAt(i)));
+		}
+		// mgr.then(Consts.TASK_REPEAT_TIME, taskSfx);
+		taskSfx.playThenNow();
+		repeatButton.setCurrentTask(taskSfx);
+
 		playedTie = false;
 		currentTaskStartTime = totalTime;
 	}
 
 	public LabTable getLabTable() {
 		return labTable;
+	}
+
+	public RepeatButton getRepeatButton() {
+		return repeatButton;
+	}
+
+	public ConfirmButton getConfirmButton() {
+		return confirmButton;
 	}
 
 	public List<Shelf> getShelfs() {
@@ -148,16 +194,35 @@ public class World {
 		if (labTable.isInside(x, y)) {
 			return labTable;
 		}
+		if (repeatButton.isInside(x, y)) {
+			return repeatButton;
+		}
+		if (confirmButton.isInside(x, y)) {
+			return confirmButton;
+		}
 		return null;
 	}
 
 	public void update(float delta){
 		totalTime += delta;
 
-		if (!playedTie && totalTime - currentTaskStartTime > Consts.PAR_TIME) {
-			tickSfx.stop();
-			Sfx.get("tie").manager().play();
-			playedTie = true;
+		if (inPreStartPhase){
+			if (playingIfSound > 0){
+				playingIfSound -= delta;
+			} else if (!playedNarrationMusic) {
+				narrationMusic.play();
+				playedNarrationMusic = true;
+			} else if (narrationMusic.isPlaying()){
+				// Do nothing and wait
+			} else {
+				startTask();
+			}
+		} else {
+			if (!playedTie && totalTime - currentTaskStartTime > Consts.PAR_TIME) {
+				tickSfx.stop();
+				Sfx.get("tie").manager().play();
+				playedTie = true;
+			}
 		}
 	}
 
@@ -169,6 +234,9 @@ public class World {
 	}
 
 	public void startDrag(float x, float y){
+		if (inPreStartPhase){
+			return;
+		}
 		dragIngredient = findIngredient(x, y);
 		if (dragIngredient == null){
 			System.out.println("[Nothing grabbed]");
@@ -239,7 +307,7 @@ public class World {
 		return cnt;
 	}
 
-	private boolean checkSolution(){
+	boolean checkSolution(){
 		for (int i = 0; i < Consts.TABLE_INGREDIENT_COUNT; i++) {
 			currentTableValue.setCharAt(i, ' ');
 		}
@@ -290,7 +358,7 @@ public class World {
 					}
 				}
 				sfx = sfx.then(Consts.SHUFFLE_TIME, Sfx.get("sd"));
-				sfxOrig.play();
+				sfxOrig.playThenNow();
 			} else if (labTable.isInside(x, y) && countIngredientsInRect(labTable, dragIngredient) < Consts.TABLE_INGREDIENT_COUNT) {
 				dragIngredient.setHeight(labTable.getHeight());
 				dragIngredient.setY(labTable.getY());
@@ -314,14 +382,11 @@ public class World {
 					}
 				}
 				sfx = sfx.then(Consts.SHUFFLE_TIME, Sfx.get("td"));
-				sfxOrig.play();
+				sfxOrig.playThenNow();
 			} else {
 				dragIngredient.setX(dragOriginalPosition.x);
 				dragIngredient.setY(dragOriginalPosition.y);
 				Sfx.get("id").manager().play();
-			}
-			if (checkSolution()){
-				startNextTask();
 			}
 			dragIngredient = null;
 		}

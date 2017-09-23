@@ -5,8 +5,13 @@ b 0 1
 c 1 0
 d 1 2
 e 1 3
+nar1.mp3
 abd
+nar1.mp3
 eda
+nar1.mp3
 da
+nar1.mp3
 adcb
+nar1.mp3
 ade
