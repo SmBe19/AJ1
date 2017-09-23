@@ -1,6 +1,8 @@
 package com.smeanox.games.aj1.world;
 
 
+import com.smeanox.games.aj1.audio.Sfx;
+
 public class Shelf extends Rect {
 
 	public Shelf(float x, float y, float width, float height) {
@@ -9,7 +11,7 @@ public class Shelf extends Rect {
 
 	@Override
 	public void click(float x, float y) {
-		System.out.println("[Shelf]");
+		Sfx.get("sc").manager().play();
 	}
 
 }

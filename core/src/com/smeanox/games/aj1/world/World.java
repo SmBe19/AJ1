@@ -1,9 +1,12 @@
 package com.smeanox.games.aj1.world;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.StringBuilder;
 import com.smeanox.games.aj1.Consts;
+import com.smeanox.games.aj1.audio.Sfx;
+import com.smeanox.games.aj1.audio.SfxManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,9 +22,13 @@ public class World {
 	private String nextLevelName;
 	private float shelfHeight;
 	private int currentTask;
+	private float currentTaskStartTime;
+	private float food;
 	private final StringBuilder currentTableValue;
 	private final Vector2 dragOffset, dragOriginalPosition;
 	private Ingredient dragIngredient;
+	private SfxManager tickSfx;
+	private boolean playedTie;
 
 	public World() {
 		labTable = new LabTable(Consts.TABLE_LEFT, Consts.TABLE_OFFSET, Consts.TABLE_WIDTH, Consts.TABLE_HEIGHT);
@@ -33,6 +40,7 @@ public class World {
 		dragOriginalPosition = new Vector2();
 		currentTableValue = new StringBuilder();
 		currentTableValue.setLength(Consts.TABLE_INGREDIENT_COUNT);
+		food = 0;
 	}
 
 	public void loadFile(String fileName) {
@@ -62,6 +70,36 @@ public class World {
 		}
 
 		currentTask = 0;
+		startTask();
+	}
+
+	private void finishTask(){
+		if (tickSfx != null) {
+			tickSfx.stop();
+		}
+		float usedTime = totalTime - currentTaskStartTime;
+		food += Math.min(10, Math.max(-10, (Consts.PAR_TIME - usedTime) * Consts.FOOD_TIME_MULTIPLIER));
+	}
+
+	private void startNextTask(){
+		finishTask();
+		currentTask++;
+		if (currentTask == tasks.size()) {
+			System.out.println("[Next level]");
+			loadFile(nextLevelName);
+		} else {
+			System.out.println("[Next task]");
+			startTask();
+		}
+	}
+
+	private void startTask(){
+		tickSfx = Sfx.get("tis").manager();
+		SfxManager tit = tickSfx.then(0.6f, Sfx.get("tit"));
+		tit.repeat(5.7f);
+		tickSfx.play();
+		playedTie = false;
+		currentTaskStartTime = totalTime;
 	}
 
 	public LabTable getLabTable() {
@@ -115,6 +153,12 @@ public class World {
 
 	public void update(float delta){
 		totalTime += delta;
+
+		if (!playedTie && totalTime - currentTaskStartTime > Consts.PAR_TIME) {
+			tickSfx.stop();
+			Sfx.get("tie").manager().play();
+			playedTie = true;
+		}
 	}
 
 	public void click(float x, float y){
@@ -133,9 +177,9 @@ public class World {
 			dragOffset.set(x - dragIngredient.getX(), y - dragIngredient.getY());
 			boolean onTable = labTable.isInside(x, y);
 			if (onTable){
-				System.out.println("[Ingredient grabbed on Lab table]");
+				Sfx.get("tg").manager().play();
 			} else {
-				System.out.println("[Ingredient grabbed on Shelf]");
+				Sfx.get("sg").manager().play();
 			}
 		}
 	}
@@ -147,7 +191,7 @@ public class World {
 		}
 	}
 
-	private boolean shuffleLeft(Ingredient ingredient) {
+	private int shuffleLeft(Ingredient ingredient) {
 		Ingredient other = findIngredient(ingredient.getX(), ingredient.getCenterY(), ingredient);
 		if (other != null){
 			other.setX(ingredient.getX() - other.getWidth());
@@ -156,12 +200,13 @@ public class World {
 				shuffleRight(other);
 			} else {
 				shuffleLeft(other);
+				return 1;
 			}
 		}
-		return other != null;
+		return 0;
 	}
 
-	private boolean shuffleRight(Ingredient ingredient) {
+	private int shuffleRight(Ingredient ingredient) {
 		Ingredient other = findIngredient(ingredient.getX() + ingredient.getWidth(), ingredient.getCenterY(), ingredient);
 		if (other != null) {
 			other.setX(ingredient.getX() + ingredient.getWidth());
@@ -170,17 +215,18 @@ public class World {
 				shuffleLeft(other);
 			} else {
 				shuffleRight(other);
+				return 2;
 			}
 		}
-		return other != null;
+		return 0;
 	}
 
-	private boolean shuffleAround(Ingredient ingredient){
-		boolean shuffled = false;
-		shuffled |= shuffleLeft(dragIngredient);
-		shuffled |= shuffleRight(dragIngredient);
-		shuffled |= shuffleLeft(dragIngredient);
-		return shuffled;
+	private int shuffleAround(Ingredient ingredient){
+		int val = 0;
+		val |= shuffleLeft(dragIngredient);
+		val |= shuffleRight(dragIngredient);
+		val |= shuffleLeft(dragIngredient);
+		return val;
 	}
 
 	private int countIngredientsInRect(Rect rect, Ingredient butWithout) {
@@ -225,31 +271,57 @@ public class World {
 				dragIngredient.setHeight(shelf.getHeight());
 				dragIngredient.setY(shelf.getY());
 				dragIngredient.setX(Math.max(Consts.SHELF_LEFT, Math.min(Consts.SHELF_RIGHT - dragIngredient.getWidth(), dragIngredient.getX())));
-				if (shuffleAround(dragIngredient)){
-					System.out.println("[Shuffle on Shelf]");
+				int shuffle = shuffleAround(dragIngredient);
+				SfxManager sfx = SfxManager.empty();
+				SfxManager sfxOrig = sfx;
+				if (MathUtils.randomBoolean()){
+					if ((shuffle & 1) > 0) {
+						sfx = sfx.then(Consts.SHUFFLE_TIME, Sfx.get("ss")).pan(Consts.PAN_RIGHT, Consts.PAN_LEFT, Consts.SHUFFLE_TIME);
+					}
+					if ((shuffle & 2) > 0) {
+						sfx = sfx.then(Consts.SHUFFLE_TIME, Sfx.get("ss")).pan(Consts.PAN_LEFT, Consts.PAN_RIGHT, Consts.SHUFFLE_TIME);
+					}
+				} else {
+					if ((shuffle & 2) > 0) {
+						sfx = sfx.then(Consts.SHUFFLE_TIME, Sfx.get("ss")).pan(Consts.PAN_LEFT, Consts.PAN_RIGHT, Consts.SHUFFLE_TIME);
+					}
+					if ((shuffle & 1) > 0) {
+						sfx = sfx.then(Consts.SHUFFLE_TIME, Sfx.get("ss")).pan(Consts.PAN_RIGHT, Consts.PAN_LEFT, Consts.SHUFFLE_TIME);
+					}
 				}
-				System.out.println("[Ingredient dropped on Shelf]");
+				sfx = sfx.then(Consts.SHUFFLE_TIME, Sfx.get("sd"));
+				sfxOrig.play();
 			} else if (labTable.isInside(x, y) && countIngredientsInRect(labTable, dragIngredient) < Consts.TABLE_INGREDIENT_COUNT) {
 				dragIngredient.setHeight(labTable.getHeight());
 				dragIngredient.setY(labTable.getY());
 				dragIngredient.setX(Math.max(Consts.TABLE_LEFT, Math.min(Consts.TABLE_RIGHT - dragIngredient.getWidth(), dragIngredient.getX())));
-				if (shuffleAround(dragIngredient)){
-					System.out.println("[Shuffle on Lab table]");
+				int shuffle = shuffleAround(dragIngredient);
+				SfxManager sfx = SfxManager.empty();
+				SfxManager sfxOrig = sfx;
+				if (MathUtils.randomBoolean()){
+					if ((shuffle & 1) > 0) {
+						sfx = sfx.then(Consts.SHUFFLE_TIME, Sfx.get("ts")).pan(Consts.PAN_RIGHT, Consts.PAN_LEFT, Consts.SHUFFLE_TIME);
+					}
+					if ((shuffle & 2) > 0) {
+						sfx = sfx.then(Consts.SHUFFLE_TIME, Sfx.get("ts")).pan(Consts.PAN_LEFT, Consts.PAN_RIGHT, Consts.SHUFFLE_TIME);
+					}
+				} else {
+					if ((shuffle & 2) > 0) {
+						sfx = sfx.then(Consts.SHUFFLE_TIME, Sfx.get("ts")).pan(Consts.PAN_LEFT, Consts.PAN_RIGHT, Consts.SHUFFLE_TIME);
+					}
+					if ((shuffle & 1) > 0) {
+						sfx = sfx.then(Consts.SHUFFLE_TIME, Sfx.get("ts")).pan(Consts.PAN_RIGHT, Consts.PAN_LEFT, Consts.SHUFFLE_TIME);
+					}
 				}
-				System.out.println("[Ingredient dropped on Lab table]");
+				sfx = sfx.then(Consts.SHUFFLE_TIME, Sfx.get("td"));
+				sfxOrig.play();
 			} else {
 				dragIngredient.setX(dragOriginalPosition.x);
 				dragIngredient.setY(dragOriginalPosition.y);
-				System.out.println("[Ingredient dropped on floor]");
+				Sfx.get("id").manager().play();
 			}
 			if (checkSolution()){
-				currentTask++;
-				if (currentTask == tasks.size()) {
-					System.out.println("[Next level]");
-					loadFile(nextLevelName);
-				} else {
-					System.out.println("[Next task]");
-				}
+				startNextTask();
 			}
 			dragIngredient = null;
 		}

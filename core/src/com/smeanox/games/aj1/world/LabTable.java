@@ -1,5 +1,7 @@
 package com.smeanox.games.aj1.world;
 
+import com.smeanox.games.aj1.audio.Sfx;
+
 public class LabTable extends Rect {
 
 	public LabTable(float x, float y, float width, float height) {
@@ -8,7 +10,7 @@ public class LabTable extends Rect {
 
 	@Override
 	public void click(float x, float y) {
-		System.out.println("[Lab table]");
+		Sfx.get("tc").manager().play();
 	}
 
 }

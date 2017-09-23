@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 import com.smeanox.games.aj1.Consts;
+import com.smeanox.games.aj1.audio.SfxManager;
 import com.smeanox.games.aj1.world.Ingredient;
 import com.smeanox.games.aj1.world.Shelf;
 import com.smeanox.games.aj1.world.World;
@@ -83,6 +84,7 @@ public class GameScreen implements Screen{
 		camera.unproject(mousePosition);
 
 		update(delta);
+		SfxManager.updateAll(delta);
 
 		if (Consts.DRAW_LAB) {
 			shapeRenderer.begin(ShapeRenderer.ShapeType.Line);

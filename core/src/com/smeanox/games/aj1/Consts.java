@@ -23,4 +23,9 @@ public class Consts {
 	public static final int SHELF_INGREDIENT_COUNT = 10;
 	public static final float INGREDIENT_WIDTH = SHELF_WIDTH / Consts.SHELF_INGREDIENT_COUNT;
 	public static final int TABLE_INGREDIENT_COUNT = ((int) (TABLE_WIDTH / INGREDIENT_WIDTH + 0.5f));
+	public static final float PAR_TIME = 15;
+	public static final float FOOD_TIME_MULTIPLIER = 0.1f;
+	public static final float PAN_LEFT = -0.7f;
+	public static final float PAN_RIGHT = 0.7f;
+	public static final float SHUFFLE_TIME = 0.8f;
 }
